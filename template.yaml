@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: api gw, lambda, layers
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+  ServiceAccountId:
+    Type: String
+
+Resources:         
+  getGoogleCalendar:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Sub 'getGoogleCalendar-${Env}'
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.7
+      CodeUri: src/getGoogleCalendar
+      Description: !Sub 'getGoogleCalendar-${Env}'
+      Environment:
+        Variables:
+          ENV: !Sub ${Env}
+          SERVICE_ACCOUNT_ID: !Sub ${ServiceAccountId}
+      MemorySize: 1024
+      Timeout: 60
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/slackBotRole'
+      Tags:
+        Env: dev
+        project: lineBot                
+      Layers:
+        - !Ref layerGcp 
+
+  layerGcp:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: python modules Layer
+      ContentUri: ./layer/gcp
+      CompatibleRuntimes:
+        - python3.7
+        - python3.6
